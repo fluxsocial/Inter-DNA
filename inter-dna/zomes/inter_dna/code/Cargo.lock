@@ -219,20 +219,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "expression"
-version = "0.1.0"
-dependencies = [
- "hdk",
- "hdk_proc_macros",
- "holochain_json_derive 0.0.30",
- "holochain_wasm_utils",
- "meta-traits",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -446,7 +432,7 @@ dependencies = [
  "env_logger",
  "holochain_core_types",
  "holochain_json_api",
- "holochain_json_derive 0.0.23",
+ "holochain_json_derive",
  "holochain_persistence_api",
  "holochain_wasm_utils",
  "lazy_static",
@@ -492,7 +478,7 @@ dependencies = [
  "futures",
  "hcid",
  "holochain_json_api",
- "holochain_json_derive 0.0.23",
+ "holochain_json_derive",
  "holochain_locksmith",
  "holochain_logging",
  "holochain_persistence_api",
@@ -531,7 +517,7 @@ dependencies = [
  "futures-sink-preview",
  "futures-util-preview",
  "hcid",
- "holochain_json_derive 0.0.23",
+ "holochain_json_derive",
  "multihash",
  "objekt",
  "serde",
@@ -546,18 +532,6 @@ name = "holochain_json_derive"
 version = "0.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d411807a76c2a2f45bee166d576e65eee2659be61a62f10008e94313be1b537"
-dependencies = [
- "quote 0.6.11",
- "serde",
- "serde_json",
- "syn 0.15.31",
-]
-
-[[package]]
-name = "holochain_json_derive"
-version = "0.0.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b5398db53eb5236286b8538b74135cd02f9b4ea6b83c3b037f887b953139b39"
 dependencies = [
  "quote 0.6.11",
  "serde",
@@ -614,7 +588,7 @@ dependencies = [
  "futures-util-preview",
  "hcid",
  "holochain_json_api",
- "holochain_json_derive 0.0.23",
+ "holochain_json_derive",
  "lazy_static",
  "multihash",
  "objekt",
@@ -636,7 +610,7 @@ checksum = "f9e84c9faea1eecd4fa56fd4837e7199a19a716286baa28eee4751cd3468a448"
 dependencies = [
  "holochain_core_types",
  "holochain_json_api",
- "holochain_json_derive 0.0.23",
+ "holochain_json_derive",
  "holochain_persistence_api",
  "serde",
  "serde_derive",
@@ -670,6 +644,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "076f042c5b7b98f31d205f1249267e12a6518c1481e9dae9764af19b707d2292"
 dependencies = [
  "autocfg 1.0.0",
+]
+
+[[package]]
+name = "inter_dna"
+version = "0.1.0"
+dependencies = [
+ "hdk",
+ "hdk_proc_macros",
+ "holochain_json_derive",
+ "holochain_wasm_utils",
+ "meta-traits",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -780,7 +768,7 @@ source = "git+https://github.com/juntofoundation/Holochain-Trait-Definitions#b55
 dependencies = [
  "hdk",
  "hdk_proc_macros",
- "holochain_json_derive 0.0.23",
+ "holochain_json_derive",
  "holochain_wasm_utils",
  "serde",
  "serde_derive",

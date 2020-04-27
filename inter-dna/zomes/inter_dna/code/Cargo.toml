@@ -1,5 +1,5 @@
 [package]
-name = "expression"
+name = "inter_dna"
 version = "0.1.0"
 authors = ["hc-scaffold-framework"]
 edition = "2018"
