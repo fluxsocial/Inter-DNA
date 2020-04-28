@@ -1,7 +1,7 @@
 use hdk::{
-    error::ZomeApiResult,
-    prelude::{Entry, Address},
-    holochain_json_api::json::JsonString
+    error::{ZomeApiError, ZomeApiResult},
+    holochain_json_api::json::JsonString,
+    prelude::{Address, Entry},
 };
 use meta_traits::{GlobalEntryRef, InterDNADao};
 use std::convert::TryInto;
@@ -26,7 +26,18 @@ impl InterDNADao for InterDNA {
         Ok(())
     }
 
-    fn remove_link(_source: GlobalEntryRef, _target: GlobalEntryRef) -> ZomeApiResult<()> {
+    fn remove_link(source: GlobalEntryRef, target: GlobalEntryRef) -> ZomeApiResult<()> {
+        let source_address: Address = JsonString::from(source.clone()).try_into()?;
+        hdk::get_entry(&source_address)?.ok_or(ZomeApiError::Internal(String::from(
+            "Source entry does not exist",
+        )))?;
+
+        let target_address: Address = JsonString::from(target.clone()).try_into()?;
+        hdk::get_entry(&target_address)?.ok_or(ZomeApiError::Internal(String::from(
+            "Target entry does not exist",
+        )))?;
+
+        hdk::remove_link(&source_address, &target_address, "", "")?;
         Ok(())
     }
 

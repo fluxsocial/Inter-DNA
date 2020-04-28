@@ -8,13 +8,38 @@ extern crate serde_json;
 
 pub mod methods;
 
-use hdk::holochain_core_types::dna::entry_types::Sharing;
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use hdk::holochain_core_types::{dna::entry_types::Sharing, signature::Provenance};
+use hdk::prelude::{Address, GetEntryOptions, GetEntryResultType};
+use hdk::{
+    entry_definition::ValidatingEntryType,
+    error::ZomeApiResult,
+};
 
 use hdk_proc_macros::zome;
 use meta_traits::{GlobalEntryRef, InterDNADao};
 
 pub struct InterDNA();
+
+fn get_entry_provenances(address: &Address) -> Result<Vec<Provenance>, String> {
+    match hdk::get_entry_result(
+        address,
+        GetEntryOptions {
+            status_request: Default::default(),
+            entry: false,
+            headers: true,
+            timeout: Default::default(),
+        },
+    )?
+    .result
+    {
+        GetEntryResultType::Single(item) => {
+            item.meta
+                .ok_or(String::from("Could not find link base/target"))?;
+            Ok(item.headers[0].provenances().to_owned())
+        }
+        GetEntryResultType::All(_items) => unreachable!(),
+    }
+}
 
 #[zome]
 pub mod shortform_expression {
@@ -39,8 +64,20 @@ pub mod shortform_expression {
                     validation_package: || {
                         hdk::ValidationPackageDefinition::Entry
                     },
-                    validation: | _validation_data: hdk::LinkValidationData | {
-                        Ok(())
+                    validation: | validation_data: hdk::LinkValidationData | {
+                        match validation_data {
+                            hdk::LinkValidationData::LinkAdd{link: _, validation_data: _} => Ok(()),
+                            hdk::LinkValidationData::LinkRemove{link, validation_data: _} => {
+                                let source_provenances = get_entry_provenances(link.link.base())?;
+                                let target_provenances = get_entry_provenances(link.link.target())?;
+                                let links_provenances = link.top_chain_header.provenances();
+                                if source_provenances.contains(&links_provenances[0]) | target_provenances.contains(&links_provenances[1]) {
+                                    Ok(())
+                                } else {
+                                    Err(String::from("Provenances on base/target of link do not match to link provenances"))
+                                }
+                            }
+                        }
                     }
                 )
             ]
