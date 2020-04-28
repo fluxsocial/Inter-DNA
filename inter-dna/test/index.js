@@ -12,6 +12,7 @@ process.on('unhandledRejection', error => {
 });
 
 const dnaPath = path.join(__dirname, "../dist/inter-dna.dna.json")
+const dna = Config.dna(dnaPath, 'InterDNA')
 
 const orchestrator = new Orchestrator({
   middleware: combine(
@@ -22,33 +23,53 @@ const orchestrator = new Orchestrator({
     // specify that all "players" in the test are on the local machine, rather than
     // on remote machines
     localOnly,
-
-    // squash all instances from all conductors down into a single conductor,
-    // for in-memory testing purposes.
-    // Remove this middleware for other "real" network types which can actually
-    // send messages across conductors
-    singleConductor,
   ),
-})
+  //   waiter: {
+  //   hardTimeout: 100000,
+  //   strict: true,
+  // }
+});
 
-const dna = Config.dna(dnaPath, 'scaffold-test')
-const conductorConfig = Config.gen({myInstanceName: dna})
+const conductorConfig = Config.gen(
+  {
+    InterDNA: dna,
+  },
+  {
+    logger: {
+      type: 'debug',
+      state_dump: false,
+      // rules: {
+      //     rules: [{ exclude: true, pattern: ".*" }]
+      // }
+    },
+    network: {
+      type: 'sim2h',
+      sim2h_url: 'ws://localhost:9000'
+    }
+  }
+)
 
-orchestrator.registerScenario("description of example test", async (s, t) => {
+const sample_dna_address = "QmZ6mav8UBRzA5YzApoVRdUWQGCw4wgxBvEkkYN1sQXXkH"
+const sample_target_dna_address = "QmXuPFimMCoYQrXqX9vr1vve8JtpQ7smfkw1LugqEhyWTr"
+const sample_source_address = "14f5e1afcbfb2a7d617ddb3423d742b3959eb36100e3efdc481c1966b4d06858"
+const sample_target_address = "62ccd5f507d61e28fe590a6487e120d9bf87bf7d61a447c4ccddbc447382873e"
 
+orchestrator.registerScenario("create and get link outgoing & incoming", async (s, t) => {
   const {alice, bob} = await s.players({alice: conductorConfig, bob: conductorConfig}, true)
 
-  // Make a call to a Zome function
-  // indicating the function, and passing it an input
-  const addr = await alice.call("myInstanceName", "my_zome", "create_my_entry", {"entry" : {"content":"sample content"}})
-
-  // Wait for all network activity to settle
+  const result  = await alice.call("InterDNA", "inter_dna", "create_link", 
+    {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, 
+      target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}})
+  t.deepEqual(result.hasOwnProperty("Ok"), true)
   await s.consistency()
-
-  const result = await bob.call("myInstanceName", "my_zome", "get_my_entry", {"address": addr.Ok})
-
-  // check for equality of the actual and expected results
-  t.deepEqual(result, { Ok: { App: [ 'my_entry', '{"content":"sample content"}' ] } })
 })
+
+// orchestrator.registerScenario("create and remove link", async (s, t) => {
+//   const {alice, bob} = await s.players({alice: conductorConfig, bob: conductorConfig}, true)
+// })
+
+// orchestrator.registerScenario("create and remove link w/ validation failure", async (s, t) => {
+//   const {alice, bob, james} = await s.players({alice: conductorConfig, bob: conductorConfig, james: conductorConfig}, true)
+// })
 
 orchestrator.run()
