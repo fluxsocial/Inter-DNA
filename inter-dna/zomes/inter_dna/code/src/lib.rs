@@ -10,10 +10,7 @@ pub mod methods;
 
 use hdk::holochain_core_types::{dna::entry_types::Sharing, signature::Provenance};
 use hdk::prelude::{Address, GetEntryOptions, GetEntryResultType};
-use hdk::{
-    entry_definition::ValidatingEntryType,
-    error::ZomeApiResult,
-};
+use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
 
 use hdk_proc_macros::zome;
 use meta_traits::{GlobalEntryRef, InterDNADao};
@@ -79,6 +76,28 @@ pub mod shortform_expression {
                             }
                         }
                     }
+                ),
+                from!(
+                    "global_entry_ref",
+                    link_type: "incoming",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: | validation_data: hdk::LinkValidationData | {
+                        match validation_data {
+                            hdk::LinkValidationData::LinkAdd{link: _, validation_data: _} => Ok(()),
+                            hdk::LinkValidationData::LinkRemove{link, validation_data: _} => {
+                                let source_provenances = get_entry_provenances(link.link.base())?;
+                                let target_provenances = get_entry_provenances(link.link.target())?;
+                                let links_provenances = link.top_chain_header.provenances();
+                                if source_provenances.contains(&links_provenances[0]) | target_provenances.contains(&links_provenances[1]) {
+                                    Ok(())
+                                } else {
+                                    Err(String::from("Provenances on base/target of link do not match to link provenances"))
+                                }
+                            }
+                        }
+                    }
                 )
             ]
         )
@@ -108,13 +127,21 @@ pub mod shortform_expression {
 
     #[zome_fn("hc_public")]
     #[zome_fn("inter_dna")]
-    pub fn get_outgoing(source: GlobalEntryRef) -> ZomeApiResult<Vec<GlobalEntryRef>> {
-        InterDNA::get_outgoing(source)
+    pub fn get_outgoing(
+        source: GlobalEntryRef,
+        count: usize,
+        page: usize,
+    ) -> ZomeApiResult<Vec<GlobalEntryRef>> {
+        InterDNA::get_outgoing(source, count, page)
     }
 
     #[zome_fn("hc_public")]
     #[zome_fn("inter_dna")]
-    pub fn get_incoming(target: GlobalEntryRef) -> ZomeApiResult<Vec<GlobalEntryRef>> {
-        InterDNA::get_incoming(target)
+    pub fn get_incoming(
+        target: GlobalEntryRef,
+        count: usize,
+        page: usize,
+    ) -> ZomeApiResult<Vec<GlobalEntryRef>> {
+        InterDNA::get_incoming(target, count, page)
     }
 }

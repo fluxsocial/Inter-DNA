@@ -1,7 +1,7 @@
 use hdk::{
     error::{ZomeApiError, ZomeApiResult},
     holochain_json_api::json::JsonString,
-    prelude::{Address, Entry},
+    prelude::{Address, Entry, GetLinksOptions, LinkMatch, Pagination, SizePagination, SortOrder},
 };
 use meta_traits::{GlobalEntryRef, InterDNADao};
 use std::convert::TryInto;
@@ -23,6 +23,7 @@ impl InterDNADao for InterDNA {
         };
 
         hdk::link_entries(&source_address, &target_address, "", "")?;
+        hdk::link_entries(&target_address, &source_address, "incoming", "")?;
         Ok(())
     }
 
@@ -41,11 +42,57 @@ impl InterDNADao for InterDNA {
         Ok(())
     }
 
-    fn get_outgoing(_source: GlobalEntryRef) -> ZomeApiResult<Vec<GlobalEntryRef>> {
-        Ok(vec![])
+    fn get_outgoing(
+        source: GlobalEntryRef,
+        count: usize,
+        page: usize,
+    ) -> ZomeApiResult<Vec<GlobalEntryRef>> {
+        let source_address: Address = JsonString::from(source.clone()).try_into()?;
+        Ok(hdk::get_links_with_options(
+            &source_address,
+            LinkMatch::Any,
+            LinkMatch::Any,
+            GetLinksOptions {
+                status_request: Default::default(),
+                headers: false,
+                timeout: Default::default(),
+                pagination: Some(Pagination::Size(SizePagination {
+                    page_number: page,
+                    page_size: count,
+                })),
+                sort_order: Some(SortOrder::Descending),
+            },
+        )?
+        .addresses()
+        .into_iter()
+        .map(|link_target_address| hdk::utils::get_as_type::<GlobalEntryRef>(link_target_address))
+        .collect::<ZomeApiResult<Vec<GlobalEntryRef>>>()?)
     }
 
-    fn get_incoming(_target: GlobalEntryRef) -> ZomeApiResult<Vec<GlobalEntryRef>> {
-        Ok(vec![])
+    fn get_incoming(
+        target: GlobalEntryRef,
+        count: usize,
+        page: usize,
+    ) -> ZomeApiResult<Vec<GlobalEntryRef>> {
+        let target_address: Address = JsonString::from(target.clone()).try_into()?;
+        Ok(hdk::get_links_with_options(
+            &target_address,
+            LinkMatch::Exactly("incoming"),
+            LinkMatch::Any,
+            GetLinksOptions {
+                status_request: Default::default(),
+                headers: false,
+                timeout: Default::default(),
+                pagination: Some(Pagination::Size(SizePagination {
+                    page_number: page,
+                    page_size: count,
+                })),
+                sort_order: Some(SortOrder::Descending),
+            },
+        )?
+        .addresses()
+        .into_iter()
+        .map(|link_target_address| hdk::utils::get_as_type::<GlobalEntryRef>(link_target_address))
+        .collect::<ZomeApiResult<Vec<GlobalEntryRef>>>()?)
     }
 }
