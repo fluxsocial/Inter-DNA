@@ -30,11 +30,12 @@ fn get_entry_provenances(address: &Address) -> Result<Vec<Provenance>, String> {
     .result
     {
         GetEntryResultType::Single(item) => {
+            hdk::debug(format!("Got item: {:#?} for validation", item)).unwrap();
             item.meta
                 .ok_or(String::from("Could not find link base/target"))?;
             Ok(item.headers[0].provenances().to_owned())
         }
-        GetEntryResultType::All(_items) => unreachable!(),
+        GetEntryResultType::All(_items) => Err(String::from("Reached all branch")),
     }
 }
 
@@ -65,10 +66,17 @@ pub mod shortform_expression {
                         match validation_data {
                             hdk::LinkValidationData::LinkAdd{link: _, validation_data: _} => Ok(()),
                             hdk::LinkValidationData::LinkRemove{link, validation_data: _} => {
-                                let source_provenances = get_entry_provenances(link.link.base())?;
-                                let target_provenances = get_entry_provenances(link.link.target())?;
+                                let source_provenances = get_entry_provenances(link.link.base())?
+                                    .into_iter()
+                                    .map(|val| val.source())
+                                    .collect::<Vec<Address>>();
+                                let target_provenances = get_entry_provenances(link.link.target())?
+                                    .into_iter()
+                                    .map(|val| val.source())
+                                    .collect::<Vec<Address>>();
                                 let links_provenances = link.top_chain_header.provenances();
-                                if source_provenances.contains(&links_provenances[0]) | target_provenances.contains(&links_provenances[1]) {
+
+                                if source_provenances.contains(&links_provenances[0].source()) | target_provenances.contains(&links_provenances[0].source()) {
                                     Ok(())
                                 } else {
                                     Err(String::from("Provenances on base/target of link do not match to link provenances"))
@@ -87,10 +95,17 @@ pub mod shortform_expression {
                         match validation_data {
                             hdk::LinkValidationData::LinkAdd{link: _, validation_data: _} => Ok(()),
                             hdk::LinkValidationData::LinkRemove{link, validation_data: _} => {
-                                let source_provenances = get_entry_provenances(link.link.base())?;
-                                let target_provenances = get_entry_provenances(link.link.target())?;
+                                let source_provenances = get_entry_provenances(link.link.base())?
+                                    .into_iter()
+                                    .map(|val| val.source())
+                                    .collect::<Vec<Address>>();
+                                let target_provenances = get_entry_provenances(link.link.target())?
+                                    .into_iter()
+                                    .map(|val| val.source())
+                                    .collect::<Vec<Address>>();
                                 let links_provenances = link.top_chain_header.provenances();
-                                if source_provenances.contains(&links_provenances[0]) | target_provenances.contains(&links_provenances[1]) {
+
+                                if source_provenances.contains(&links_provenances[0].source()) | target_provenances.contains(&links_provenances[0].source()) {
                                     Ok(())
                                 } else {
                                     Err(String::from("Provenances on base/target of link do not match to link provenances"))
