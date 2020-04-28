@@ -655,6 +655,7 @@ dependencies = [
  "holochain_json_derive",
  "holochain_wasm_utils",
  "meta-traits",
+ "multihash",
  "serde",
  "serde_derive",
  "serde_json",
