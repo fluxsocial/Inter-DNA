@@ -52,6 +52,7 @@ impl InterDNADao for InterDNA {
         )))?;
 
         hdk::remove_link(&source_address, &target_address, "", "")?;
+        hdk::remove_link(&target_address, &source_address, "incoming", "")?;
         Ok(())
     }
 
