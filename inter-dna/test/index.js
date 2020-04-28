@@ -57,19 +57,71 @@ const sample_target_address = "62ccd5f507d61e28fe590a6487e120d9bf87bf7d61a447c4c
 orchestrator.registerScenario("create and get link outgoing & incoming", async (s, t) => {
   const {alice, bob} = await s.players({alice: conductorConfig, bob: conductorConfig}, true)
 
-  const result  = await alice.call("InterDNA", "inter_dna", "create_link", 
+  const result = await alice.call("InterDNA", "inter_dna", "create_link", 
     {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, 
       target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}})
   t.deepEqual(result.hasOwnProperty("Ok"), true)
   await s.consistency()
+
+  const outgoing = await bob.call("InterDNA", "inter_dna", "get_outgoing", {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, page: 0, count: 1})
+  t.deepEqual(outgoing.hasOwnProperty("Ok"), true)
+  t.deepEqual(outgoing.Ok.length, 1)
+
+  const incoming = await bob.call("InterDNA", "inter_dna", "get_incoming", {target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}, page: 0, count: 1})
+  t.deepEqual(incoming.hasOwnProperty("Ok"), true)
+  t.deepEqual(incoming.Ok.length, 1)
 })
 
-// orchestrator.registerScenario("create and remove link", async (s, t) => {
-//   const {alice, bob} = await s.players({alice: conductorConfig, bob: conductorConfig}, true)
-// })
+orchestrator.registerScenario("create and remove link", async (s, t) => {
+  const {alice, bob} = await s.players({alice: conductorConfig, bob: conductorConfig}, true)
 
-// orchestrator.registerScenario("create and remove link w/ validation failure", async (s, t) => {
-//   const {alice, bob, james} = await s.players({alice: conductorConfig, bob: conductorConfig, james: conductorConfig}, true)
-// })
+  const result = await alice.call("InterDNA", "inter_dna", "create_link", 
+    {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, 
+      target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}})
+  t.deepEqual(result.hasOwnProperty("Ok"), true)
+  await s.consistency()
+
+  const outgoing = await bob.call("InterDNA", "inter_dna", "get_outgoing", {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, page: 0, count: 1})
+  t.deepEqual(outgoing.hasOwnProperty("Ok"), true)
+  t.deepEqual(outgoing.Ok.length, 1)
+
+  const delete_link = await alice.call("InterDNA", "inter_dna", "remove_link", 
+    {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, 
+      target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}})
+  t.deepEqual(delete_link.hasOwnProperty("Ok"), true)
+  await s.consistency()
+
+  const outgoing_deleted = await bob.call("InterDNA", "inter_dna", "get_outgoing", {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, page: 0, count: 1})
+  t.deepEqual(outgoing_deleted.hasOwnProperty("Ok"), true)
+  t.deepEqual(outgoing_deleted.Ok.length, 0)
+
+  const incoming = await bob.call("InterDNA", "inter_dna", "get_incoming", {target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}, page: 0, count: 1})
+  t.deepEqual(incoming.hasOwnProperty("Ok"), true)
+  t.deepEqual(incoming.Ok.length, 0)
+})
+
+orchestrator.registerScenario("create and remove link w/ validation failure", async (s, t) => {
+  const {alice, bob, james} = await s.players({alice: conductorConfig, bob: conductorConfig, james: conductorConfig}, true)
+
+  const result = await alice.call("InterDNA", "inter_dna", "create_link", 
+    {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, 
+      target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}})
+  t.deepEqual(result.hasOwnProperty("Ok"), true)
+  await s.consistency()
+
+  const delete_link = await james.call("InterDNA", "inter_dna", "remove_link", 
+    {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, 
+      target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}})
+  t.deepEqual(delete_link.hasOwnProperty("Err"), true)
+  await s.consistency()
+
+  const outgoing_deleted = await bob.call("InterDNA", "inter_dna", "get_outgoing", {source: {dna_address: sample_dna_address, entry_address: sample_source_address}, page: 0, count: 1})
+  t.deepEqual(outgoing_deleted.hasOwnProperty("Ok"), true)
+  t.deepEqual(outgoing_deleted.Ok.length, 1)
+
+  const incoming = await bob.call("InterDNA", "inter_dna", "get_incoming", {target: {dna_address: sample_target_dna_address, entry_address: sample_target_address}, page: 0, count: 1})
+  t.deepEqual(incoming.hasOwnProperty("Ok"), true)
+  t.deepEqual(incoming.Ok.length, 1)
+})
 
 orchestrator.run()
