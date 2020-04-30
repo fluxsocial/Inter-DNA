@@ -40,7 +40,7 @@ fn get_entry_provenances(address: &Address) -> Result<Vec<Provenance>, String> {
 }
 
 #[zome]
-pub mod shortform_expression {
+pub mod inter_dna {
     #[entry_def]
     pub fn expression_entry_def() -> ValidatingEntryType {
         entry!(
